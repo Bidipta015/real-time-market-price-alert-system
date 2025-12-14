@@ -6,27 +6,44 @@ if (!apiKey || apiKey.trim() === "") {
     process.exit(1);
 }
 
-// Use the correct Polygon.io endpoint for financials with 'apiKey' parameter
-const url = `https://api.polygon.io/v3/reference/financials?ticker=${ticker}&apiKey=${apiKey}`;
+const endpoints = [
+    {
+        name: 'balanceSheets',
+        url: `https://api.polygon.io/v3/reference/balance_sheets?ticker=${ticker}&apiKey=${apiKey}`
+    },
+    {
+        name: 'incomeStatements',
+        url: `https://api.polygon.io/v3/reference/income_statements?ticker=${ticker}&apiKey=${apiKey}`
+    },
+    {
+        name: 'cashFlowStatements',
+        url: `https://api.polygon.io/v3/reference/cash_flow_statements?ticker=${ticker}&apiKey=${apiKey}`
+    }
+];
 
-console.log(`Fetching financial statements for ${ticker}`);
+console.log(`Fetching financial statements for ${ticker} from Polygon.io v3 endpoints...`);
 
 (async () => {
     try {
-        const response = await fetch(url);
-        let errorBody = '';
-        if (!response.ok) {
-            try { errorBody = await response.text(); } catch {}
-            if (response.status === 403) {
-                console.error(`Polygon.io API error: 403 Forbidden. Check your API key permissions. Response: ${errorBody}`);
-            } else {
-                console.error(`Polygon.io API error: ${response.status} ${response.statusText}. Response: ${errorBody}`);
+        const results = {};
+        for (const endpoint of endpoints) {
+            console.log(`Fetching ${endpoint.name}...`);
+            const response = await fetch(endpoint.url);
+            let errorBody = '';
+            if (!response.ok) {
+                try { errorBody = await response.text(); } catch {}
+                if (response.status === 403) {
+                    console.error(`Polygon.io API error: 403 Forbidden on ${endpoint.name}. Check your API key permissions. Response: ${errorBody}`);
+                } else {
+                    console.error(`Polygon.io API error: ${response.status} ${response.statusText} on ${endpoint.name}. Response: ${errorBody}`);
+                }
+                process.exit(1);
             }
-            process.exit(1);
+            results[endpoint.name] = await response.json();
+            console.log(`Fetched ${endpoint.name}.`);
         }
-        const data = await response.json();
-        setContext('financialStatements', data);
-        console.log('Fetched financial statements.');
+        setContext('financialStatements', results);
+        console.log('Fetched and aggregated all financial statements.');
     } catch (e) {
         console.error('Failed to fetch financial statements:', e);
         process.exit(1);

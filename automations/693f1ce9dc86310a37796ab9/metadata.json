@@ -1,7 +1,7 @@
 {
   "automationId": "693f1ce9dc86310a37796ab9",
   "automationName": "Unnamed Automation",
-  "version": "v6",
+  "version": "v7",
   "mode": "multi-file",
   "dependencies": [],
   "environmentVariables": [
@@ -9,5 +9,5 @@
     "POLYGON_API_KEY",
     "NEWSAPI_API_KEY"
   ],
-  "syncedAt": "2025-12-14T23:40:22.024Z"
+  "syncedAt": "2025-12-14T23:41:01.679Z"
 }
