@@ -6,48 +6,45 @@ if (!apiKey || apiKey.trim() === "") {
     process.exit(1);
 }
 
-const endpoints = {
-    balanceSheet: `https://api.polygon.io/v1/reference/financials/balance_sheets?ticker=${ticker}&limit=1&apikey=${apiKey}`,
-    incomeStatement: `https://api.polygon.io/v1/reference/financials/income_statements?ticker=${ticker}&limit=1&apikey=${apiKey}`,
-    cashFlow: `https://api.polygon.io/v1/reference/financials/cash_flow_statements?ticker=${ticker}&limit=1&apikey=${apiKey}`
-};
+// Use the latest financials endpoint (vX, usually v3 or v2)
+const endpoint = `https://api.polygon.io/v3/reference/financials?ticker=${ticker}&limit=3&apikey=${apiKey}`;
 
-console.log(`Fetching financial statements for ${ticker}`);
+console.log(`Fetching financial statements for ${ticker} using unified endpoint`);
 
 (async () => {
     try {
-        const [bsRes, isRes, cfRes] = await Promise.all([
-            fetch(endpoints.balanceSheet),
-            fetch(endpoints.incomeStatement),
-            fetch(endpoints.cashFlow)
-        ]);
+        const res = await fetch(endpoint);
         let errorBody = '';
-        if (!bsRes.ok) {
-            try { errorBody = await bsRes.text(); } catch {}
-            console.error(`Polygon.io API error (Balance Sheet): ${bsRes.status} ${bsRes.statusText}. Response: ${errorBody}`);
+        if (!res.ok) {
+            try { errorBody = await res.text(); } catch {}
+            console.error(`Polygon.io API error (Financials): ${res.status} ${res.statusText}. Response: ${errorBody}`);
             process.exit(1);
         }
-        if (!isRes.ok) {
-            try { errorBody = await isRes.text(); } catch {}
-            console.error(`Polygon.io API error (Income Statement): ${isRes.status} ${isRes.statusText}. Response: ${errorBody}`);
+        const data = await res.json();
+        if (!data || !data.results || !Array.isArray(data.results) || data.results.length === 0) {
+            console.error('No financial statements found for this ticker.');
             process.exit(1);
         }
-        if (!cfRes.ok) {
-            try { errorBody = await cfRes.text(); } catch {}
-            console.error(`Polygon.io API error (Cash Flow Statement): ${cfRes.status} ${cfRes.statusText}. Response: ${errorBody}`);
-            process.exit(1);
-        }
-        const [bsData, isData, cfData] = await Promise.all([
-            bsRes.json(),
-            isRes.json(),
-            cfRes.json()
-        ]);
-        const financialStatements = {
-            balanceSheet: bsData,
-            incomeStatement: isData,
-            cashFlow: cfData
+        // Aggregate the latest available statements
+        const statements = {
+            balanceSheet: null,
+            incomeStatement: null,
+            cashFlow: null
         };
-        setContext('financialStatements', financialStatements);
+        for (const filing of data.results) {
+            if (filing.financials) {
+                if (filing.financials.balance_sheet && !statements.balanceSheet) {
+                    statements.balanceSheet = filing.financials.balance_sheet;
+                }
+                if (filing.financials.income_statement && !statements.incomeStatement) {
+                    statements.incomeStatement = filing.financials.income_statement;
+                }
+                if (filing.financials.cash_flow_statement && !statements.cashFlow) {
+                    statements.cashFlow = filing.financials.cash_flow_statement;
+                }
+            }
+        }
+        setContext('financialStatements', statements);
         console.log('Fetched and aggregated financial statements.');
     } catch (e) {
         console.error('Failed to fetch financial statements:', e);
