@@ -1,0 +1,13 @@
+{
+  "automationId": "693f1ce9dc86310a37796ab9",
+  "automationName": "Unnamed Automation",
+  "version": "v3",
+  "mode": "multi-file",
+  "dependencies": [],
+  "environmentVariables": [
+    "TICKER_SYMBOL",
+    "POLYGON_API_KEY",
+    "NEWSAPI_API_KEY"
+  ],
+  "syncedAt": "2025-12-14T23:29:56.278Z"
+}
