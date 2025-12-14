@@ -6,10 +6,10 @@ if (!apiKey || apiKey.trim() === "") {
     process.exit(1);
 }
 
-// Use the latest financials endpoint (vX, usually v3 or v2)
-const endpoint = `https://api.polygon.io/v3/reference/financials?ticker=${ticker}&limit=3&apikey=${apiKey}`;
+// Use the correct financials endpoint (v2)
+const endpoint = `https://api.polygon.io/v2/reference/financials?ticker=${ticker}&limit=3&apikey=${apiKey}`;
 
-console.log(`Fetching financial statements for ${ticker} using unified endpoint`);
+console.log(`Fetching financial statements for ${ticker} using v2 endpoint`);
 
 (async () => {
     try {
